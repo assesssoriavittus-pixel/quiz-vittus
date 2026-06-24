@@ -394,10 +394,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                    mode: "no-cors"
+                    body: JSON.stringify(payload)
                 })
-                .then(() => console.log("Webhook enviado com sucesso!"))
+                .then(res => console.log("Webhook enviado com sucesso!", res.status))
                 .catch(err => console.error("Erro ao enviar webhook:", err));
             } else {
                 console.log('--- NOVO AGENDAMENTO (MOCK / WEBHOOK NÃO CONFIGURADO) ---', payload);
