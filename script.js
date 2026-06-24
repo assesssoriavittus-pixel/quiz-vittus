@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Log answers (can be sent to backend)
         console.log('Quiz Answers:', answers);
 
+        // Salvar respostas do quiz no localStorage para enviar junto com o agendamento
+        localStorage.setItem('quizAnswers', JSON.stringify(answers));
+
         // Override CTA click to redirect to scheduling page (in case they click before auto-redirect)
         const resultBtn = document.querySelector('.quiz-step[data-step="4"] .cta-button');
         if (resultBtn) {
@@ -347,11 +350,42 @@ document.addEventListener('DOMContentLoaded', () => {
             // Link do Webhook do Make.com
             const WEBHOOK_URL = "https://hook.us2.make.com/jzazjelvhr81odkf3loe5l73l5ssatud";
 
+            // Recuperar respostas do quiz salvas no localStorage
+            const quizAnswers = JSON.parse(localStorage.getItem('quizAnswers') || '{}');
+
+            // Mapear valores das respostas para textos legíveis
+            const objetivoMap = {
+                'escalar': 'Escalar as vendas com previsibilidade',
+                'depender': 'Depender menos de mim e de indicações',
+                'estruturar': 'Estruturar ou reestruturar o time de vendas',
+                'converter': 'Converter melhor o que já entra'
+            };
+            const segmentoMap = {
+                'consultoria': 'Consultoria, assessoria ou serviço de alto valor',
+                'advocacia': 'Advocacia, contabilidade ou saúde',
+                'educacao': 'Educação, mentoria ou infoproduto',
+                'seguros': 'Seguros, consórcio ou financeiro',
+                'industria': 'Indústria ou distribuição',
+                'varejo': 'Varejo ou loja física',
+                'commodity': 'Commodity (o cliente decide pelo preço)',
+                'governo': 'Venda para o governo (licitação)'
+            };
+            const papelMap = {
+                'dono': 'Dono ou fundador',
+                'socio': 'Sócio',
+                'diretor': 'Diretor(a)',
+                'gestor': 'Gestor comercial',
+                'outro': 'Outro'
+            };
+
             const payload = {
                 data: selectedFullDate.toLocaleDateString('pt-BR'),
                 horario: selectedTime,
                 nome: name,
-                whatsapp: phone
+                whatsapp: phone,
+                objetivo_comercial: objetivoMap[quizAnswers.q1] || quizAnswers.q1 || '',
+                segmento: segmentoMap[quizAnswers.q2] || quizAnswers.q2 || '',
+                papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || ''
             };
 
             // Envia os dados para o Make.com (se o link estiver preenchido)
