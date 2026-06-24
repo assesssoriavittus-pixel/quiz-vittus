@@ -390,11 +390,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Envia os dados para o Make.com (se o link estiver preenchido)
             if (WEBHOOK_URL !== "SUA_URL_DO_MAKE_AQUI") {
+                console.log('--- ENVIANDO AGENDAMENTO ---', JSON.stringify(payload, null, 2));
                 fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }).catch(err => console.error("Erro ao enviar webhook:", err));
+                    body: JSON.stringify(payload),
+                    mode: "no-cors"
+                })
+                .then(() => console.log("Webhook enviado com sucesso!"))
+                .catch(err => console.error("Erro ao enviar webhook:", err));
             } else {
                 console.log('--- NOVO AGENDAMENTO (MOCK / WEBHOOK NÃO CONFIGURADO) ---', payload);
             }
