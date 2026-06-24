@@ -1187,6 +1187,10 @@ body {
         flex-direction: column;
         gap: 16px;
     }
+
+    .header-inner .cta-button-small {
+        display: none;
+    }
 }
 
 /* ===========================

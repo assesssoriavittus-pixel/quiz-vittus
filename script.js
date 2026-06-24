@@ -193,16 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const today = new Date();
+            // Só permite agendar a partir de amanhã
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0,0,0,0);
+            
             for (let i = 1; i <= lastDay.getDate(); i++) {
                 const daySpan = document.createElement('span');
                 daySpan.textContent = i;
                 
                 const thisDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-                thisDate.setHours(23,59,59,999);
+                thisDate.setHours(0,0,0,0);
                 
                 const isWeekend = thisDate.getDay() === 0 || thisDate.getDay() === 6;
                 
-                if (thisDate >= today && !isWeekend) {
+                if (thisDate >= tomorrow && !isWeekend) {
                     daySpan.classList.add('day-active');
                     daySpan.style.cursor = 'pointer';
                     daySpan.style.color = '#3b82f6'; // Azul para dias disponíveis
