@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vittus — Verificação de Perfil</title>
+    <meta name="description" content="Responda 3 perguntas rápidas e descubra se o seu perfil se encaixa no diagnóstico comercial da Vittus.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Header / Logo -->
+    <header class="header">
+        <img src="logo.png" alt="Vittus" class="logo-img">
+    </header>
+
+    <!-- Glow Effects (sutis) -->
+    <div class="glow glow-top"></div>
+    <div class="glow glow-bottom"></div>
+    <div class="glow glow-corner-left"></div>
+    <div class="glow glow-corner-right"></div>
+
+    <!-- Quiz Container -->
+    <main class="quiz-container" id="quizContainer">
+
+        <!-- Step 1 -->
+        <section class="quiz-step active" data-step="1">
+            <div class="step-content">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    ACESSO POR SELEÇÃO
+                </div>
+                <div class="step-counter">
+                    <span class="step-current">01</span> / <span class="step-total">03</span>
+                </div>
+                <h1 class="question">Qual seu principal objetivo comercial agora?</h1>
+                <p class="subtitle">
+                    Liberamos <strong>poucas sessões gratuitas</strong> de Diagnóstico Comercial por semana. Estas 3 perguntas confirmam que o seu momento se encaixa — leva menos de 30 segundos e <u>não pedimos dados pessoais</u>.
+                </p>
+
+                <div class="options-list">
+                    <label class="option" data-value="escalar">
+                        <input type="radio" name="q1" value="escalar">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Escalar as vendas com previsibilidade</span>
+                    </label>
+                    <label class="option" data-value="depender">
+                        <input type="radio" name="q1" value="depender">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Depender menos de mim e de indicações</span>
+                    </label>
+                    <label class="option" data-value="estruturar">
+                        <input type="radio" name="q1" value="estruturar">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Estruturar ou reestruturar o time de vendas</span>
+                    </label>
+                    <label class="option" data-value="converter">
+                        <input type="radio" name="q1" value="converter">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Converter melhor o que já entra</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section class="quiz-step" data-step="2">
+            <div class="step-content">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    ACESSO POR SELEÇÃO
+                </div>
+                <div class="step-counter">
+                    <span class="step-current">02</span> / <span class="step-total">03</span>
+                </div>
+                <h1 class="question">Qual o segmento da sua empresa?</h1>
+
+                <div class="options-list">
+                    <label class="option" data-value="consultoria">
+                        <input type="radio" name="q2" value="consultoria">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Consultoria, assessoria ou serviço de alto valor</span>
+                    </label>
+                    <label class="option" data-value="advocacia">
+                        <input type="radio" name="q2" value="advocacia">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Advocacia, contabilidade ou saúde</span>
+                    </label>
+                    <label class="option" data-value="educacao">
+                        <input type="radio" name="q2" value="educacao">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Educação, mentoria ou infoproduto</span>
+                    </label>
+                    <label class="option" data-value="seguros">
+                        <input type="radio" name="q2" value="seguros">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Seguros, consórcio ou financeiro</span>
+                    </label>
+                    <label class="option" data-value="industria">
+                        <input type="radio" name="q2" value="industria">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Indústria ou distribuição</span>
+                    </label>
+                    <label class="option" data-value="varejo">
+                        <input type="radio" name="q2" value="varejo">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Varejo ou loja física</span>
+                    </label>
+                    <label class="option" data-value="commodity">
+                        <input type="radio" name="q2" value="commodity">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Commodity (o cliente decide pelo preço)</span>
+                    </label>
+                    <label class="option" data-value="governo">
+                        <input type="radio" name="q2" value="governo">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Venda para o governo (licitação)</span>
+                    </label>
+                </div>
+
+                <button class="back-btn" onclick="goBack()">← Voltar</button>
+            </div>
+        </section>
+
+        <!-- Step 3 -->
+        <section class="quiz-step" data-step="3">
+            <div class="step-content">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    ACESSO POR SELEÇÃO
+                </div>
+                <div class="step-counter">
+                    <span class="step-current">03</span> / <span class="step-total">03</span>
+                </div>
+                <h1 class="question">Qual o seu papel na empresa?</h1>
+
+                <div class="options-list">
+                    <label class="option" data-value="dono">
+                        <input type="radio" name="q3" value="dono">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Dono ou fundador</span>
+                    </label>
+                    <label class="option" data-value="socio">
+                        <input type="radio" name="q3" value="socio">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Sócio</span>
+                    </label>
+                    <label class="option" data-value="diretor">
+                        <input type="radio" name="q3" value="diretor">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Diretor(a)</span>
+                    </label>
+                    <label class="option" data-value="gestor">
+                        <input type="radio" name="q3" value="gestor">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Gestor comercial</span>
+                    </label>
+                    <label class="option" data-value="outro">
+                        <input type="radio" name="q3" value="outro">
+                        <span class="option-radio"></span>
+                        <span class="option-text">Outro</span>
+                    </label>
+                </div>
+
+                <button class="back-btn" onclick="goBack()">← Voltar</button>
+            </div>
+        </section>
+
+        <!-- Result Screen -->
+        <section class="quiz-step" data-step="4">
+            <div class="step-content result-content">
+                <div class="spinner"></div>
+                <h1 class="result-title">Seu perfil foi <span class="highlight">selecionado</span> ✓</h1>
+                <p class="result-text">
+                    Você se encaixa no recorte do Diagnóstico Comercial. Estamos liberando sua agenda para você escolher o melhor horário com um <strong>especialista do nosso time</strong>...
+                </p>
+                <a href="#" class="cta-button" id="ctaButton">
+                    Escolher meu horário agora
+                </a>
+                <p class="redirect-text">Você será redirecionado automaticamente</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2025 Vittus. Verificação de perfil — leva menos de 1 minuto.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
