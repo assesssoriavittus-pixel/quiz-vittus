@@ -247,13 +247,38 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        function handleDayClick(day) {
+        async function handleDayClick(day) {
             selectedFullDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
             
             document.getElementById('selected-date-display').textContent = weekdays[selectedFullDate.getDay()];
             document.getElementById('selected-date-sub').textContent = `${months[selectedFullDate.getMonth()]} ${day}, ${selectedFullDate.getFullYear()}`;
 
             const timesList = document.getElementById('times-list');
+            timesList.innerHTML = '<p style="text-align:center; color:#a1a1aa; margin-top:20px;">Carregando horários...</p>';
+            
+            // 1. Buscar agendamentos reais do Supabase para esse dia para bloquear horários
+            let bookedTimes = [];
+            const SUPABASE_URL = "https://icmxasjvqdavnkupibng.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljbXhhc2p2cWRhdm5rdXBpYm5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTA4NzYsImV4cCI6MjA5ODAyNjg3Nn0.L-72wFJqci3xpU5gUkxNozPzSHTpbpmkCrRBIt-YtQk";
+            
+            const pad = (n) => String(n).padStart(2, '0');
+            const dateStr = `${selectedFullDate.getFullYear()}-${pad(selectedFullDate.getMonth() + 1)}-${pad(day)}`;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=horario_inicio,horario_fim,status&data=eq.${dateStr}&status=neq.cancelado`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (res.ok) {
+                    const bookingsData = await res.json();
+                    bookedTimes = bookingsData.map(b => b.horario_inicio.substring(0, 5));
+                }
+            } catch (err) {
+                console.error("Erro ao buscar agendamentos do CRM:", err);
+            }
+
             timesList.innerHTML = '';
             // Mock de horários entre 10h e 18h
             const mockTimes = ['10:00 AM', '11:00 AM', '01:00 PM', '02:30 PM', '04:00 PM', '05:30 PM'];
@@ -265,19 +290,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentHour = today.getHours();
             const currentMinutes = today.getMinutes();
 
+            const timeTo24h = (timeStr) => {
+                let [hoursStr, minutesStr] = timeStr.replace(' PM', '').replace(' AM', '').split(':');
+                let h = parseInt(hoursStr);
+                if (timeStr.includes('PM') && h < 12) h += 12;
+                if (timeStr.includes('AM') && h === 12) h = 0;
+                return `${pad(h)}:${pad(parseInt(minutesStr))}`;
+            };
+
             const availableTimes = mockTimes.filter(time => {
+                const time24h = timeTo24h(time);
+                if (bookedTimes.includes(time24h)) return false;
+
                 const dateTimeStr = selectedFullDate.toDateString() + ' ' + time;
-                if (bookedMockData.includes(dateTimeStr)) return false; // Remove se já foi agendado
+                if (bookedMockData.includes(dateTimeStr)) return false;
 
                 if (!isToday) return true;
                 
-                let [hoursStr, minutesStr] = time.replace(' PM', '').replace(' AM', '').split(':');
-                let h = parseInt(hoursStr);
-                if (time.includes('PM') && h < 12) h += 12;
-                if (time.includes('AM') && h === 12) h = 0;
+                let h = parseInt(time24h.split(':')[0]);
+                let m = parseInt(time24h.split(':')[1]);
                 
                 if (h > currentHour) return true;
-                if (h === currentHour && parseInt(minutesStr) > currentMinutes) return true;
+                if (h === currentHour && m > currentMinutes) return true;
                 return false;
             });
             
@@ -443,6 +477,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.appendChild(errorDiv);
             };
 
+            // Função para enviar os dados para o CRM (Supabase)
+            const sendToSupabase = async () => {
+                const SUPABASE_URL = "https://icmxasjvqdavnkupibng.supabase.co";
+                const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljbXhhc2p2cWRhdm5rdXBpYm5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTA4NzYsImV4cCI6MjA5ODAyNjg3Nn0.L-72wFJqci3xpU5gUkxNozPzSHTpbpmkCrRBIt-YtQk";
+
+                try {
+                    // 1. Criar ou atualizar Lead no Supabase
+                    const leadPayload = {
+                        nome: name,
+                        telefone: phone,
+                        origem: 'quiz-instagram',
+                        status: 'agendado',
+                        respostas_quiz: [
+                            { pergunta: 'Objetivo Comercial', resposta: payload.objetivo_comercial },
+                            { pergunta: 'Segmento', resposta: payload.segmento },
+                            { pergunta: 'Papel na Empresa', resposta: payload.papel_na_empresa }
+                        ],
+                        valor_estimado: 4000,
+                        notas: 'Lead criado automaticamente a partir do Quiz de Qualificação.'
+                    };
+
+                    const leadRes = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(leadPayload)
+                    });
+
+                    if (!leadRes.ok) {
+                        throw new Error(`Erro ao criar lead: ${leadRes.statusText}`);
+                    }
+
+                    const leadData = await leadRes.json();
+                    const createdLead = leadData[0];
+
+                    if (createdLead && createdLead.id) {
+                        const datePart = selectedStartIso.split('T')[0];
+                        const timeStartPart = selectedStartIso.split('T')[1].substring(0, 5);
+                        const timeEndPart = selectedEndIso.split('T')[1].substring(0, 5);
+
+                        // 2. Criar o agendamento no Supabase
+                        const bookingPayload = {
+                            lead_id: createdLead.id,
+                            consultor_id: '00000000-0000-0000-0000-000000000002',
+                            data: datePart,
+                            horario_inicio: timeStartPart,
+                            horario_fim: timeEndPart,
+                            status: 'confirmado',
+                            tipo: 'diagnostico',
+                            notas: 'Agendamento sincronizado automaticamente a partir do Quiz.'
+                        };
+
+                        const bookingRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(bookingPayload)
+                        });
+
+                        if (!bookingRes.ok) {
+                            console.error('Erro ao criar agendamento no CRM:', bookingRes.statusText);
+                        } else {
+                            console.log('✅ Agendamento inserido com sucesso no CRM!');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Erro de sincronização com o CRM:', err);
+                }
+            };
+
             // TENTATIVA: Fetch com application/json (padrão do Make.com)
             try {
                 const response = await fetch(WEBHOOK_URL, {
@@ -455,6 +566,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (response.ok || response.status === 200 || response.status === 201) {
                     console.log("✅ Webhook enviado com sucesso via fetch!");
+                    
+                    // Sincronizar com o Supabase do CRM
+                    await sendToSupabase();
+                    
                     showSuccess();
                 } else {
                     throw new Error("Status " + response.status);
