@@ -379,17 +379,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 'outro': 'Outro'
             };
 
-            // Criar datas em formato ISO (padrão universal) para o Google Calendar não dar erro
+            // Criar datas no formato ISO com offset do Brasil (UTC-3)
+            // toISOString() gera UTC, o que confunde o Make.com com fuso São Paulo
+            // Aqui geramos manualmente com o offset -03:00
             let [hStr, mStr] = selectedTime.replace(' PM', '').replace(' AM', '').split(':');
             let hStart = parseInt(hStr);
             if (selectedTime.includes('PM') && hStart < 12) hStart += 12;
             if (selectedTime.includes('AM') && hStart === 12) hStart = 0;
-            
-            const startDate = new Date(selectedFullDate);
-            startDate.setHours(hStart, parseInt(mStr), 0);
-            
-            const endDate = new Date(startDate);
-            endDate.setMinutes(endDate.getMinutes() + 30); // Duração de 30 min
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const d = selectedFullDate;
+            const yyyy = d.getFullYear();
+            const mm = pad(d.getMonth() + 1);
+            const dd = pad(d.getDate());
+            const hhEnd = hStart + Math.floor((parseInt(mStr) + 30) / 60);
+            const mmEnd = (parseInt(mStr) + 30) % 60;
+
+            // Formato: 2026-06-26T10:00:00-03:00 (Brasil)
+            const dataInicioIso = `${yyyy}-${mm}-${dd}T${pad(hStart)}:${pad(parseInt(mStr))}:00-03:00`;
+            const dataFimIso    = `${yyyy}-${mm}-${dd}T${pad(hhEnd)}:${pad(mmEnd)}:00-03:00`;
 
             const payload = {
                 nome: name,
@@ -397,8 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 objetivo_comercial: objetivoMap[quizAnswers.q1] || quizAnswers.q1 || '',
                 segmento: segmentoMap[quizAnswers.q2] || quizAnswers.q2 || '',
                 papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || '',
-                dataInicioIso: startDate.toISOString(),
-                dataFimIso: endDate.toISOString()
+                dataInicioIso: dataInicioIso,
+                dataFimIso: dataFimIso
             };
 
             // Mostrar estado de carregamento
