@@ -379,6 +379,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 'outro': 'Outro'
             };
 
+            // Criar datas em formato ISO (padrão universal) para o Google Calendar não dar erro
+            let [hStr, mStr] = selectedTime.replace(' PM', '').replace(' AM', '').split(':');
+            let hStart = parseInt(hStr);
+            if (selectedTime.includes('PM') && hStart < 12) hStart += 12;
+            if (selectedTime.includes('AM') && hStart === 12) hStart = 0;
+            
+            const startDate = new Date(selectedFullDate);
+            startDate.setHours(hStart, parseInt(mStr), 0);
+            
+            const endDate = new Date(startDate);
+            endDate.setMinutes(endDate.getMinutes() + 30); // Duração de 30 min
+
             const payload = {
                 data: selectedFullDate.toLocaleDateString('pt-BR'),
                 horario: selectedTime,
@@ -386,7 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 whatsapp: phone,
                 objetivo_comercial: objetivoMap[quizAnswers.q1] || quizAnswers.q1 || '',
                 segmento: segmentoMap[quizAnswers.q2] || quizAnswers.q2 || '',
-                papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || ''
+                papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || '',
+                dataInicioIso: startDate.toISOString(),
+                dataFimIso: endDate.toISOString()
             };
 
             // Mostrar estado de carregamento
