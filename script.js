@@ -178,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let selectedFullDate = null;
         let selectedTime = null;
+        let selectedStartIso = null;
+        let selectedEndIso = null;
 
         function renderCalendar() {
             const headers = `<span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>`;
@@ -296,25 +298,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.selectTime = function(time) {
             selectedTime = time;
-            
-            // Format 30 min diff
-            let [hoursStr, minutesStr, ampm] = time.replace(' PM', '').replace(' AM', '').split(':');
-            let h = parseInt(hoursStr);
-            let m = parseInt(minutesStr);
+
+            // Calcular hora de início em 24h
+            const pad = (n) => String(n).padStart(2, '0');
+            let timeParts = time.replace(' PM', '').replace(' AM', '').split(':');
+            let hStart = parseInt(timeParts[0]);
+            let mStart = parseInt(timeParts[1]);
+            if (time.includes('PM') && hStart < 12) hStart += 12;
+            if (time.includes('AM') && hStart === 12) hStart = 0;
+
+            // Calcular hora de fim (+30 min)
+            let hEnd = hStart;
+            let mEnd = mStart + 30;
+            if (mEnd >= 60) { hEnd += 1; mEnd -= 60; }
+
+            // Montar ISO com offset Brasil -03:00 (salvar agora, usar no submit)
+            const d = selectedFullDate;
+            const yyyy = d.getFullYear();
+            const mo = pad(d.getMonth() + 1);
+            const dd = pad(d.getDate());
+            selectedStartIso = `${yyyy}-${mo}-${dd}T${pad(hStart)}:${pad(mStart)}:00-03:00`;
+            selectedEndIso   = `${yyyy}-${mo}-${dd}T${pad(hEnd)}:${pad(mEnd)}:00-03:00`;
+
+            // Exibir horário no form
             let isPM = time.includes('PM');
-            
-            m += 30;
-            if (m >= 60) {
-                h += 1;
-                m -= 60;
-                if (h === 12) isPM = !isPM;
-                if (h > 12) h -= 12;
-            }
-            
-            let endStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
-                                
+            let hDisp = hEnd > 12 ? hEnd - 12 : hEnd;
+            let endStr = `${pad(hDisp)}:${pad(mEnd)} ${hEnd >= 12 ? 'PM' : 'AM'}`;
             const finalDateStr = `${time} - ${endStr} , ${weekdays[selectedFullDate.getDay()].substring(0,3)}, ${selectedFullDate.getDate()} De ${months[selectedFullDate.getMonth()].substring(0,3)} De ${selectedFullDate.getFullYear()}`;
-            
             document.getElementById('final-date-time').textContent = finalDateStr;
 
             switchView(viewTimes, viewForm);
@@ -379,34 +389,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 'outro': 'Outro'
             };
 
-            // Criar datas no formato ISO com offset do Brasil (UTC-3)
-            // toISOString() gera UTC, o que confunde o Make.com com fuso São Paulo
-            // Aqui geramos manualmente com o offset -03:00
-            let [hStr, mStr] = selectedTime.replace(' PM', '').replace(' AM', '').split(':');
-            let hStart = parseInt(hStr);
-            if (selectedTime.includes('PM') && hStart < 12) hStart += 12;
-            if (selectedTime.includes('AM') && hStart === 12) hStart = 0;
-
-            const pad = (n) => String(n).padStart(2, '0');
-            const d = selectedFullDate;
-            const yyyy = d.getFullYear();
-            const mm = pad(d.getMonth() + 1);
-            const dd = pad(d.getDate());
-            const hhEnd = hStart + Math.floor((parseInt(mStr) + 30) / 60);
-            const mmEnd = (parseInt(mStr) + 30) % 60;
-
-            // Formato: 2026-06-26T10:00:00-03:00 (Brasil)
-            const dataInicioIso = `${yyyy}-${mm}-${dd}T${pad(hStart)}:${pad(parseInt(mStr))}:00-03:00`;
-            const dataFimIso    = `${yyyy}-${mm}-${dd}T${pad(hhEnd)}:${pad(mmEnd)}:00-03:00`;
-
+            // Usar datas ISO já calculadas no momento da seleção do horário
             const payload = {
                 nome: name,
                 whatsapp: phone,
                 objetivo_comercial: objetivoMap[quizAnswers.q1] || quizAnswers.q1 || '',
                 segmento: segmentoMap[quizAnswers.q2] || quizAnswers.q2 || '',
                 papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || '',
-                dataInicioIso: dataInicioIso,
-                dataFimIso: dataFimIso
+                dataInicioIso: selectedStartIso,
+                dataFimIso: selectedEndIso
             };
 
             // Mostrar estado de carregamento
