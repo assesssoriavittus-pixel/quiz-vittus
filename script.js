@@ -342,10 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 300);
         }
 
-        document.getElementById('booking-form').addEventListener('submit', (e) => {
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('b-name').value;
             const phone = document.getElementById('b-phone').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             
             // Link do Webhook do Make.com
             const WEBHOOK_URL = "https://hook.us2.make.com/jzazjelvhr81odkf3loe5l73l5ssatud";
@@ -388,37 +389,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 papel_na_empresa: papelMap[quizAnswers.q3] || quizAnswers.q3 || ''
             };
 
-            // Envia os dados para o Make.com (se o link estiver preenchido)
-            if (WEBHOOK_URL !== "SUA_URL_DO_MAKE_AQUI") {
-                console.log('--- ENVIANDO AGENDAMENTO ---', JSON.stringify(payload, null, 2));
-                fetch(WEBHOOK_URL, {
+            // Mostrar estado de carregamento
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            submitBtn.style.opacity = '0.7';
+
+            console.log('--- ENVIANDO AGENDAMENTO ---', JSON.stringify(payload, null, 2));
+
+            // Função para mostrar sucesso
+            const showSuccess = () => {
+                bookedMockData.push(selectedFullDate.toDateString() + ' ' + selectedTime);
+                viewForm.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #4ade80; margin-bottom: 15px;">Agendamento concluído com sucesso!</h2>
+                        <p style="font-size: 16px; margin-bottom: 25px;">Sua vaga para o dia <strong>${selectedFullDate.toLocaleDateString()}</strong> às <strong>${selectedTime}</strong> está reservada.</p>
+                        
+                        <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 8px;">
+                            <strong style="color: var(--accent);">⚠️ AVISO IMPORTANTE:</strong>
+                            <p style="font-size: 14px; margin-top: 8px;">Nossa equipe entrará em contato com você pelo WhatsApp informado. <strong>Se você não responder para confirmar sua presença, você perderá o horário</strong> e a vaga será repassada para o próximo selecionado.</p>
+                        </div>
+                        
+                        <button class="cta-button" style="margin-top: 30px; width: 100%;" onclick="document.getElementById('view-form').style.display='none'; document.getElementById('view-calendar').style.display='block';">Entendido, voltar ao início</button>
+                    </div>
+                `;
+            };
+
+            // Função para mostrar erro
+            const showError = (errorMsg) => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Agendar';
+                submitBtn.style.opacity = '1';
+                
+                // Remove mensagem de erro anterior se existir
+                const oldError = e.target.querySelector('.webhook-error');
+                if (oldError) oldError.remove();
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'webhook-error';
+                errorDiv.style.cssText = 'background: rgba(220, 38, 38, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 12px; margin-top: 15px; color: #fca5a5; font-size: 14px; text-align: center;';
+                errorDiv.innerHTML = `⚠️ ${errorMsg}<br><small style="color:#a1a1aa;">Tente novamente ou entre em contato pelo WhatsApp.</small>`;
+                e.target.appendChild(errorDiv);
+            };
+
+            // TENTATIVA: Fetch com application/json (padrão do Make.com)
+            try {
+                const response = await fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
-                })
-                .then(res => console.log("Webhook enviado com sucesso!", res.status))
-                .catch(err => console.error("Erro ao enviar webhook:", err));
-            } else {
-                console.log('--- NOVO AGENDAMENTO (MOCK / WEBHOOK NÃO CONFIGURADO) ---', payload);
+                });
+                
+                console.log("Webhook status:", response.status);
+                
+                if (response.ok || response.status === 200 || response.status === 201) {
+                    console.log("✅ Webhook enviado com sucesso via fetch!");
+                    showSuccess();
+                } else {
+                    throw new Error("Status " + response.status);
+                }
+                
+            } catch (error) {
+                console.error("❌ Erro ao enviar:", error.message);
+                showError("Erro ao enviar agendamento. Verifique sua conexão com a internet.");
             }
-            
-            bookedMockData.push(selectedFullDate.toDateString() + ' ' + selectedTime);
-            
-            // Troca o form por uma mensagem de sucesso na própria tela
-            viewForm.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
-                    <h2 style="color: #4ade80; margin-bottom: 15px;">Agendamento concluído com sucesso!</h2>
-                    <p style="font-size: 16px; margin-bottom: 25px;">Sua vaga para o dia <strong>${selectedFullDate.toLocaleDateString()}</strong> às <strong>${selectedTime}</strong> está reservada.</p>
-                    
-                    <div style="background: rgba(220, 38, 38, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 8px;">
-                        <strong style="color: var(--accent);">⚠️ AVISO IMPORTANTE:</strong>
-                        <p style="font-size: 14px; margin-top: 8px;">Nossa equipe entrará em contato com você pelo WhatsApp informado. <strong>Se você não responder para confirmar sua presença, você perderá o horário</strong> e a vaga será repassada para o próximo selecionado.</p>
-                    </div>
-                    
-                    <button class="cta-button" style="margin-top: 30px; width: 100%;" onclick="document.getElementById('view-form').style.display='none'; document.getElementById('view-calendar').style.display='block';">Entendido, voltar ao início</button>
-                </div>
-            `;
         });
 
         // Initialize calendar
