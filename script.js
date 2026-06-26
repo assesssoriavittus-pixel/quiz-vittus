@@ -392,8 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
             endDate.setMinutes(endDate.getMinutes() + 30); // Duração de 30 min
 
             const payload = {
-                data: selectedFullDate.toLocaleDateString('pt-BR'),
-                horario: selectedTime,
                 nome: name,
                 whatsapp: phone,
                 objetivo_comercial: objetivoMap[quizAnswers.q1] || quizAnswers.q1 || '',
