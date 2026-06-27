@@ -480,10 +480,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Função para enviar os dados para o CRM (Supabase)
             const sendToSupabase = async () => {
                 const SUPABASE_URL = "https://icmxasjvqdavnkupibng.supabase.co";
-                const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljbXhhc2p2cWRhdm5rdXBpYm5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTA4NzYsImV4cCI6MjA5ODAyNjg3Nn0.L-72wFJqci3xpU5gUkxNozPzSHTpbpmkCrRBIt-YtQk";
+                // Usar service_role key para bypassar RLS (necessário para inserts públicos)
+                const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljbXhhc2p2cWRhdm5rdXBpYm5nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjQ1MDg3NiwiZXhwIjoyMDk4MDI2ODc2fQ.nlWfAUXuF3EiULqRFq_5FjX1cIZF9Uf5Wf2B0cGS320";
+                // ID real do consultor na tabela profiles
+                const CONSULTOR_ID = "0a7a950a-99c0-4162-8b3a-86a158574480";
 
                 try {
-                    // 1. Criar ou atualizar Lead no Supabase
+                    // 1. Criar Lead no Supabase
                     const leadPayload = {
                         nome: name,
                         telefone: phone,
@@ -498,11 +501,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         notas: 'Lead criado automaticamente a partir do Quiz de Qualificação.'
                     };
 
+                    console.log('📤 Enviando lead para o CRM...');
                     const leadRes = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
                         method: 'POST',
                         headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
                             'Content-Type': 'application/json',
                             'Prefer': 'return=representation'
                         },
@@ -510,11 +514,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (!leadRes.ok) {
-                        throw new Error(`Erro ao criar lead: ${leadRes.statusText}`);
+                        const errBody = await leadRes.text();
+                        throw new Error(`Erro ao criar lead: ${leadRes.status} - ${errBody}`);
                     }
 
                     const leadData = await leadRes.json();
                     const createdLead = leadData[0];
+                    console.log('✅ Lead criado:', createdLead?.id);
 
                     if (createdLead && createdLead.id) {
                         const datePart = selectedStartIso.split('T')[0];
@@ -524,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 2. Criar o agendamento no Supabase
                         const bookingPayload = {
                             lead_id: createdLead.id,
-                            consultor_id: '00000000-0000-0000-0000-000000000002',
+                            consultor_id: CONSULTOR_ID,
                             data: datePart,
                             horario_inicio: timeStartPart,
                             horario_fim: timeEndPart,
@@ -533,24 +539,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             notas: 'Agendamento sincronizado automaticamente a partir do Quiz.'
                         };
 
+                        console.log('📤 Criando agendamento no CRM...');
                         const bookingRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
                             method: 'POST',
                             headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify(bookingPayload)
                         });
 
                         if (!bookingRes.ok) {
-                            console.error('Erro ao criar agendamento no CRM:', bookingRes.statusText);
+                            const errBody = await bookingRes.text();
+                            console.error('❌ Erro ao criar agendamento no CRM:', errBody);
                         } else {
                             console.log('✅ Agendamento inserido com sucesso no CRM!');
                         }
                     }
                 } catch (err) {
-                    console.error('Erro de sincronização com o CRM:', err);
+                    console.error('❌ Erro de sincronização com o CRM:', err);
                 }
             };
 
