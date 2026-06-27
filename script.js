@@ -554,26 +554,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // TENTATIVA: Fetch com application/json (padrão do Make.com)
+            // Enviar os dados diretamente para o CRM (Supabase)
             try {
-                const response = await fetch(WEBHOOK_URL, {
+                // Tentar enviar o webhook do Make em paralelo para não quebrar fluxos antigos (se existirem), mas sem depender dele
+                fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
-                });
+                }).catch(e => console.log('Make webhook falhou, mas continuando...', e));
                 
-                console.log("Webhook status:", response.status);
+                console.log("✅ Iniciando integração nativa com CRM Vittus...");
                 
-                if (response.ok || response.status === 200 || response.status === 201) {
-                    console.log("✅ Webhook enviado com sucesso via fetch!");
-                    
-                    // Sincronizar com o Supabase do CRM
-                    await sendToSupabase();
-                    
-                    showSuccess();
-                } else {
-                    throw new Error("Status " + response.status);
-                }
+                // Sincronizar com o Supabase do CRM imediatamente
+                await sendToSupabase();
+                
+                showSuccess();
                 
             } catch (error) {
                 console.error("❌ Erro ao enviar:", error.message);
